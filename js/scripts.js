@@ -31,7 +31,7 @@ function initialize() {
 	heatmap.set('dissipating', true);
 	heatmap.setMap(map);
 	
-	
+	lastMarker = null;
 }
 
 $(document).ready(function(e) {
@@ -86,9 +86,17 @@ function getLocationIP(ipAddress){
 
 function addToHeatMap(lat,lng){
 	
-	
-	heatmapData.push(new google.maps.LatLng(lat, lng));
+	var position = new google.maps.LatLng(lat, lng);
+	heatmapData.push(position);
 	heatmap.setData(heatmapData);
+	marker = new google.maps.Marker({
+         position: position,
+         map: map
+    });
+	if(lastMarker != null) {
+		lastMarker.setMap(null);
+	}
+	lastMarker = marker;
 	
 }
 
