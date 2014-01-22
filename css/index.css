@@ -6,7 +6,7 @@
 
 #log-block{
 	width: 20%;
-	height: 30%;
+	height: 240px;
 	position:absolute;
 	left:5%;
 	bottom:5%;
@@ -23,8 +23,7 @@
 #log-block .panel-primary>.panel-body{
 
 	overflow:scroll;
-	height:100%;
-	padding-bottom:41px;
+	height:195px;
 
 }
 

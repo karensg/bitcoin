@@ -28,6 +28,7 @@ function initialize() {
 	];
 	heatmap.set('gradient', gradient);
 	heatmap.set('radius', 20);
+	heatmap.set('opacity', 1);
 	heatmap.set('dissipating', true);
 	heatmap.setMap(map);
 	
