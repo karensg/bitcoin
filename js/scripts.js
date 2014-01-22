@@ -1,3 +1,7 @@
+globalMarkers = [];
+relayedData = [];
+var heatmap;
+
 $(document).ready(function(e) {
     
 	// Create useless log block
@@ -14,8 +18,14 @@ $(document).ready(function(e) {
 	};
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 	
-	// Define visualization mode
-	mode = GetURLParameter('mode');
+	reload();
+	getData();
+	
+});
+
+function reload() {
+
+	mode = window.location.hash.substring(1);
 	switch(mode)
 	{
 		case "heatmap":
@@ -27,17 +37,22 @@ $(document).ready(function(e) {
 		default:
 		  initHeatmap();
 	}
-	
-	
-	getData();
-	
-});
+}
+
+window.onhashchange = function() {
+   reload();
+};
 
 function initHeatmap() {
 
-	heatmapData = [];
+	// reset all markers from other views
+	for(i=0; i<globalMarkers.length; i++) {
+		 m = globalMarkers[i];
+		 m.setMap(null);
+	}
+	
 	heatmap = new google.maps.visualization.HeatmapLayer({
-		data: heatmapData,	
+		data: relayedData,	
 	});
 	var gradient = [
 		'rgba(0, 255, 255, 0)',
@@ -61,11 +76,20 @@ function initHeatmap() {
 	heatmap.set('dissipating', true);
 	heatmap.setMap(map);
 
-	lastMarker = null;
 }
 
 function initMarkers() {
+
+	// hide heatmap if available
+	if(heatmap != undefined) {
+		heatmap.setMap(null);
+	}
 	
+	// set all markers from the past
+	for(i=0; i<globalMarkers.length; i++) {
+		 m = globalMarkers[i];
+		 m.setMap(map);
+	}
 }
 
 function getData() {
@@ -105,33 +129,40 @@ function getData() {
 }
 
 function addData(data) {
-	switch(mode)
-	{
-		case "heatmap":
-		  addToHeatMap(data.lat, data.lon);
-		  break;
-		case 2:
-		  markers();
-		  break;
-		default:
-		  addToHeatMap(data.lat, data.lon);
-	}
-}
 
-function addToHeatMap(lat,lng){
-	
-	var position = new google.maps.LatLng(lat, lng);
-	heatmapData.push(position);
-	heatmap.setData(heatmapData);
+	var position = new google.maps.LatLng(data.lat, data.lon);
 	marker = new google.maps.Marker({
          position: position,
          map: map
     });
-	if(lastMarker != null) {
-		lastMarker.setMap(null);
-	}
-	lastMarker = marker;
+	globalMarkers.push(marker);
+	relayedData.push(position);
 	
+	switch(mode)
+	{
+		case "heatmap":
+		  addToHeatMap(position,marker);
+		  break;
+		case "markers":
+		  addMarker(position,marker);
+		  break;
+		default:
+		  addToHeatMap(position,marker);
+	}
+}
+
+function addToHeatMap(position, marker){
+		
+	heatmap.setData(relayedData);
+	// delete old marker
+	if(globalMarkers.length > 1) {
+		globalMarkers[globalMarkers.length-2].setMap(null);
+	}
+	
+}
+
+function addMarker(position,marker) {
+	//marker already set in initialization
 }
 
 function cl(message){
@@ -139,4 +170,6 @@ function cl(message){
 	console.log(message);
 	$("#log-info").prepend("<li>" + message + "</li>");
 }
+
+
 
