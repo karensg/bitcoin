@@ -31,8 +31,19 @@ function initialize() {
 	heatmap.set('dissipating', true);
 	heatmap.setMap(map);
 	
-
+	
 }
+
+$(document).ready(function(e) {
+    
+	$("#toggle-log").click(function() {
+		cl("click");
+	 	$(this).parent().toggleClass("active");
+		$("#log-block").fadeToggle();
+	});
+	
+	
+});
 
 
 google.maps.event.addDomListener(window, 'load', initialize);
@@ -66,7 +77,7 @@ function checkForNewIPs(){
 function getLocationIP(ipAddress){
 	
 	if(ipAddress != "127.0.0.1"){		
-		console.log("Get location from: " + ipAddress);
+		cl("Get location from: " + ipAddress);
 		$.getJSON("http://ip-api.com/json/"+ipAddress, function( data ) {
 			addToHeatMap(data.lat,data.lon);	 
 		});
@@ -81,5 +92,9 @@ function addToHeatMap(lat,lng){
 	
 }
 
+function cl(message){
 
+	console.log(message);
+	$("#log-info").prepend("<li>" + message + "</li>");
+}
 
