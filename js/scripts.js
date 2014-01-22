@@ -94,7 +94,7 @@ function initMarkers() {
 
 function getData() {
 	ip_addresses = []; // list with IP address that need to be verified
-
+	hashes = []; // list with transaction hashes
 	/*Get IP addresses from blockchain */
 	socket= new WebSocket('ws://ws.blockchain.info/inv');
 	socket.onopen= function() {
@@ -102,10 +102,13 @@ function getData() {
 	};
 	socket.onmessage= function(s) {
 		transaction = jQuery.parseJSON(s.data);
+		hash = transaction.x.hash;
+		hashes.push(hash);
 		ip_address = transaction.x.relayed_by;
 		ip_addresses.push(ip_address);   
 	};
 	checkForNewIPs();
+	checkForNewHashes();
 	
 	function checkForNewIPs(){
 		
@@ -125,6 +128,27 @@ function getData() {
 				addData(data);
 			});
 		}
+	}
+	
+	
+	
+	function checkForNewHashes(){
+		
+		if(hashes.length != 0){
+			hash = hashes.shift();
+			getTransActionData(hash);
+		}
+		setTimeout(function(){checkForNewHashes()},500);
+		
+	}
+
+	function getTransActionData(hash){
+					
+		$.getJSON("https://blockchain.info/inv/" + hash + "?format=json", function( data ) {
+			
+			console.log("Get transaction data: " + hash);
+		});
+		
 	}
 }
 
