@@ -1,14 +1,43 @@
-function initialize() {
-  var mapOptions = {
-    zoom: 3	,
-    center: new google.maps.LatLng(51.37180, 13.23583)
-  };
-
+$(document).ready(function(e) {
+    
+	// Create useless log block
+	$("#toggle-log").click(function() {
+		cl("click");
+	 	$(this).parent().toggleClass("active");
+		$("#log-block").fadeToggle();
+	});
+	
+	// Create map
+	var mapOptions = {
+		zoom: 3	,
+		center: new google.maps.LatLng(51.37180, 13.23583)
+	};
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+	
+	// Define visualization mode
+	mode = GetURLParameter('mode');
+	switch(mode)
+	{
+		case "heatmap":
+		  initHeatmap();
+		  break;
+		case "markers":
+		  initMarkers();
+		  break;
+		default:
+		  initHeatmap();
+	}
+	
+	
+	getData();
+	
+});
+
+function initHeatmap() {
+
 	heatmapData = [];
 	heatmap = new google.maps.visualization.HeatmapLayer({
-		data: heatmapData,
-		
+		data: heatmapData,	
 	});
 	var gradient = [
 		'rgba(0, 255, 255, 0)',
@@ -27,61 +56,65 @@ function initialize() {
 		'rgba(255, 0, 0, 1)'
 	];
 	heatmap.set('gradient', gradient);
-	heatmap.set('radius', 20);
+	heatmap.set('radius', 25);
 	heatmap.set('opacity', 1);
 	heatmap.set('dissipating', true);
 	heatmap.setMap(map);
-	
+
 	lastMarker = null;
 }
 
-$(document).ready(function(e) {
-    
-	$("#toggle-log").click(function() {
-		cl("click");
-	 	$(this).parent().toggleClass("active");
-		$("#log-block").fadeToggle();
-	});
+function initMarkers() {
 	
-	
-});
-
-
-google.maps.event.addDomListener(window, 'load', initialize);
-
-
-ip_addresses = []; // list with ipaddress that need to be verified
-checkForNewIPs();
-
-/*Get Ip adresses from blockchain */
-socket= new WebSocket('ws://ws.blockchain.info/inv');
-socket.onopen= function() {
-   socket.send('{"op":"unconfirmed_sub"}');
-};
-socket.onmessage= function(s) {
-	transaction = jQuery.parseJSON(s.data);
-	ip_address = transaction.x.relayed_by;
-	ip_addresses.push(ip_address);   
-};
-
-
-function checkForNewIPs(){
-	
-	if(ip_addresses.length != 0){
-		ip_address = ip_addresses.shift();
-		getLocationIP(ip_address);
-	}
-	setTimeout(function(){checkForNewIPs()},500);
-		
 }
 
-function getLocationIP(ipAddress){
+function getData() {
+	ip_addresses = []; // list with IP address that need to be verified
+
+	/*Get IP addresses from blockchain */
+	socket= new WebSocket('ws://ws.blockchain.info/inv');
+	socket.onopen= function() {
+	   socket.send('{"op":"unconfirmed_sub"}');
+	};
+	socket.onmessage= function(s) {
+		transaction = jQuery.parseJSON(s.data);
+		ip_address = transaction.x.relayed_by;
+		ip_addresses.push(ip_address);   
+	};
+	checkForNewIPs();
 	
-	if(ipAddress != "127.0.0.1"){		
-		cl("Get location from: " + ipAddress);
-		$.getJSON("http://ip-api.com/json/"+ipAddress, function( data ) {
-			addToHeatMap(data.lat,data.lon);	 
-		});
+	function checkForNewIPs(){
+		
+		if(ip_addresses.length != 0){
+			ip_address = ip_addresses.shift();
+			getLocationIP(ip_address);
+		}
+		setTimeout(function(){checkForNewIPs()},500);
+		
+	}
+
+	function getLocationIP(ipAddress){
+		
+		if(ipAddress != "127.0.0.1"){		
+			cl("Get location from: " + ipAddress);
+			$.getJSON("http://ip-api.com/json/" + ipAddress, function( data ) {
+				addData(data);
+			});
+		}
+	}
+}
+
+function addData(data) {
+	switch(mode)
+	{
+		case "heatmap":
+		  addToHeatMap(data.lat, data.lon);
+		  break;
+		case 2:
+		  markers();
+		  break;
+		default:
+		  addToHeatMap(data.lat, data.lon);
 	}
 }
 
