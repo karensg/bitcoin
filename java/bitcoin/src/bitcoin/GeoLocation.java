@@ -32,7 +32,7 @@ public class GeoLocation {
        
        try {
  
-		FileWriter file = new FileWriter("../../locations.json");
+		FileWriter file = new FileWriter("../../locations.json", false);
 		file.write(geoLocations.toString());
 		file.flush();
 		file.close();

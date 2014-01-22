@@ -21,4 +21,15 @@ function initialize() {
 	});
 }
 
-google.maps.event.addDomListener(window, 'load', initialize);
+//google.maps.event.addDomListener(window, 'load', initialize);
+
+
+socket= new WebSocket('ws://ws.blockchain.info/inv');
+socket.onopen= function() {
+   socket.send('{"op":"unconfirmed_sub"}');
+};
+socket.onmessage= function(s) {
+	transaction = jQuery.parseJSON(s.data);
+	console.log(transaction.x.relayed_by);
+   
+};
