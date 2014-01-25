@@ -1,13 +1,16 @@
-globalMarkers = [];
-relayedData = [];
+database = new Object();
+ipAddressesHashes = [];
+heatmapData = [];
 var heatmap;
+lastMarker = null;
+image = 'images/bitcoin.png';
 
 $(document).ready(function(e) {
-    
+
 	// Create useless log block
 	$("#toggle-log").click(function() {
 		cl("click");
-	 	$(this).parent().toggleClass("active");
+		$(this).parent().toggleClass("active");
 		$("#log-block").fadeToggle();
 	});
 	
@@ -29,30 +32,32 @@ function reload() {
 	switch(mode)
 	{
 		case "heatmap":
-		  initHeatmap();
-		  break;
+			initHeatmap();
+			break;
 		case "markers":
-		  initMarkers();
-		  break;
+			initMarkers();
+			break;
 		default:
-		  initHeatmap();
+			initHeatmap();
 	}
 }
 
 window.onhashchange = function() {
-   reload();
+	reload();
 };
 
 function initHeatmap() {
 
 	// reset all markers from other views
-	for(i=0; i<globalMarkers.length; i++) {
-		 m = globalMarkers[i];
-		 m.setMap(null);
+	for (var transaction in database) {
+		m = database[transaction].marker;
+		if (m != null) {
+			m.setMap(null);
+		}
 	}
 	
 	heatmap = new google.maps.visualization.HeatmapLayer({
-		data: relayedData,	
+		data: heatmapData,	
 	});
 	var gradient = [
 		'rgba(0, 255, 255, 0)',
@@ -86,14 +91,16 @@ function initMarkers() {
 	}
 	
 	// set all markers from the past
-	for(i=0; i<globalMarkers.length; i++) {
-		 m = globalMarkers[i];
-		 m.setMap(map);
+	for (var transaction in database) {
+		m = database[transaction].marker;
+		if (m != null) {
+			m.setMap(map);
+		}
 	}
 }
 
 function getData() {
-	ip_addresses = []; // list with IP address that need to be verified
+
 	hashes = []; // list with transaction hashes
 	/*Get IP addresses from blockchain */
 	socket= new WebSocket('ws://ws.blockchain.info/inv');
@@ -103,34 +110,39 @@ function getData() {
 	socket.onmessage= function(s) {
 		transaction = jQuery.parseJSON(s.data);
 		hash = transaction.x.hash;
+		database[hash] = new Object();
+		database[hash].info = transaction.x;
 		hashes.push(hash);
-		ip_address = transaction.x.relayed_by;
-		ip_addresses.push(ip_address);   
+		ipAddressesHashes.push(hash);
 	};
 	checkForNewIPs();
-	checkForNewHashes();
+	//checkForNewHashes();
 	
 	function checkForNewIPs(){
 		
-		if(ip_addresses.length != 0){
-			ip_address = ip_addresses.shift();
-			getLocationIP(ip_address);
+		if(ipAddressesHashes.length != 0){
+			ipAddressesHash = ipAddressesHashes.shift();
+			ipAddress = database[ipAddressesHash].info.relayed_by;
+			callbackAddData = function(ipData) {
+				database[ipAddressesHash].ipData = ipData;
+				addDataToMap(ipAddressesHash);
+			};
+			getLocationIP(ipAddress, callbackAddData);
+			
 		}
 		setTimeout(function(){checkForNewIPs()},500);
 		
 	}
 
-	function getLocationIP(ipAddress){
+	function getLocationIP(ipAddress, callback){
 		
 		if(ipAddress != "127.0.0.1"){		
-			cl("Get location from: " + ipAddress);
-			$.getJSON("http://ip-api.com/json/" + ipAddress, function( data ) {
-				addData(data);
+			//cl("Get location from: " + ipAddress);
+			$.getJSON("http://ip-api.com/json/" + ipAddress, function( ipData ) {
+				callback(ipData);
 			});
 		}
 	}
-	
-	
 	
 	function checkForNewHashes(){
 		
@@ -152,61 +164,64 @@ function getData() {
 	}
 }
 
-function addData(data) {
+function addDataToMap(hash) {
 
-	var position = new google.maps.LatLng(data.lat, data.lon);
-	var image = 'images/bitcoin.png';
 	
-	contentString = "Loading...";
-	var infowindow = new google.maps.InfoWindow({
-		content: contentString
-	});
+	transaction = database[hash];
+	var position = new google.maps.LatLng(transaction.ipData.lat, transaction.ipData.lon);
 	
+
 	marker = new google.maps.Marker({
-         position: position,
-         map: map,
-		 animation: google.maps.Animation.DROP,
-		 icon: image
-    });
-	google.maps.event.addListener(marker, 'click', function() {
-		infowindow.open(map,this);
+		position: position,
+		map: map,
+		animation: google.maps.Animation.DROP,
+		icon: image
 	});
-	
-	globalMarkers.push(marker);
-	relayedData.push(position);
+
+	google.maps.event.addListener(marker, 'click', function() {
+		setInfoWindow(this)
+	});
+
+	transaction.marker = marker;
+	heatmapData.push(position);
 	
 	switch(mode)
 	{
 		case "heatmap":
-		  addToHeatMap(position,marker);
-		  break;
+			addToHeatMap(hash);
+			break;
 		case "markers":
-		  addMarker(position,marker);
-		  break;
+			addMarker(hash);
+			break;
 		default:
-		  addToHeatMap(position,marker);
+			addToHeatMap(hash);
 	}
 }
 
-function addToHeatMap(position, marker){
+function addToHeatMap(hash){
 		
-	heatmap.setData(relayedData);
-	// delete old marker
-	if(globalMarkers.length > 1) {
-		globalMarkers[globalMarkers.length-2].setMap(null);
+	heatmap.setData(heatmapData);
+	if( lastMarker != null) {
+		lastMarker.setMap(null);
 	}
+	lastMarker = marker;
 	
 }
 
-function addMarker(position,marker) {
+function addMarker(hash) {
 	//marker already set in initialization
+}
+
+function setInfoWindow(marker) {
+	var contentString = "Still Loading...";
+	var infowindow = new google.maps.InfoWindow({
+		content: contentString
+	});
+	infowindow.open(map,marker);
 }
 
 function cl(message){
 
-	console.log(message);
-	$("#log-info").prepend("<li>" + message + "</li>");
+	//console.log(message);
+	//$("#log-info").prepend("<li>" + message + "</li>");
 }
-
-
-
