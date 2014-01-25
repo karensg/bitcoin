@@ -2,10 +2,12 @@ database = new Object();
 ipAddressesHashes = [];
 heatmapData = [];
 var heatmap;
+var markerCluster = null;
 image = 'images/bitcoin.png';
 
 lastMarker = null;
 currentOpenWindow = null;
+globalMarkers = [];
 
 
 $(document).ready(function(e) {
@@ -41,7 +43,7 @@ function reload() {
 			initMarkers();
 			break;
 		default:
-			initHeatmap();
+			initMarkers();
 	}
 }
 
@@ -51,13 +53,7 @@ window.onhashchange = function() {
 
 function initHeatmap() {
 
-	// reset all markers from other views
-	for (var transaction in database) {
-		m = database[transaction].marker;
-		if (m != null) {
-			m.setMap(null);
-		}
-	}
+	resetAllMarkers();
 	
 	heatmap = new google.maps.visualization.HeatmapLayer({
 		data: heatmapData,	
@@ -93,12 +89,35 @@ function initMarkers() {
 		heatmap.setMap(null);
 	}
 	
+	resetAllMarkers();
+	setAllMarkers();
+}
+
+
+function setAllMarkers() {
 	// set all markers from the past
 	for (var transaction in database) {
 		m = database[transaction].marker;
 		if (m != null) {
 			m.setMap(map);
 		}
+	}
+	if (mode == "grouped") {
+		markerCluster = new MarkerClusterer(map, globalMarkers);
+	} else {
+
+	}
+}
+
+function resetAllMarkers() {
+	for (var transaction in database) {
+		m = database[transaction].marker;
+		if (m != null) {
+			m.setMap(null);
+		}
+	}
+	if (markerCluster != null) {
+		markerCluster.clearMarkers();
 	}
 }
 
@@ -185,7 +204,7 @@ function addDataToMap(hash) {
 	google.maps.event.addListener(marker, 'click', function() {
 		setInfoWindow(this)
 	});
-
+	globalMarkers.push(marker);
 	transaction.marker = marker;
 	heatmapData.push(position);
 	
@@ -198,7 +217,7 @@ function addDataToMap(hash) {
 			addMarker(hash);
 			break;
 		default:
-			addToHeatMap(hash);
+			addMarker(hash);
 	}
 }
 
@@ -213,7 +232,10 @@ function addToHeatMap(hash){
 }
 
 function addMarker(hash) {
-	//marker already set in initialization
+	if(mode == "grouped") {
+		resetAllMarkers();
+		setAllMarkers();
+	}
 }
 
 function setInfoWindow(marker) {
