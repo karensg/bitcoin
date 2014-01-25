@@ -2,8 +2,11 @@ database = new Object();
 ipAddressesHashes = [];
 heatmapData = [];
 var heatmap;
-lastMarker = null;
 image = 'images/bitcoin.png';
+
+lastMarker = null;
+currentOpenWindow = null;
+
 
 $(document).ready(function(e) {
 
@@ -165,7 +168,6 @@ function getData() {
 }
 
 function addDataToMap(hash) {
-
 	
 	transaction = database[hash];
 	var position = new google.maps.LatLng(transaction.ipData.lat, transaction.ipData.lon);
@@ -173,10 +175,12 @@ function addDataToMap(hash) {
 
 	marker = new google.maps.Marker({
 		position: position,
+		title: database[hash].ipData.as,
 		map: map,
 		animation: google.maps.Animation.DROP,
 		icon: image
 	});
+	marker.set("hash", hash);
 
 	google.maps.event.addListener(marker, 'click', function() {
 		setInfoWindow(this)
@@ -213,11 +217,19 @@ function addMarker(hash) {
 }
 
 function setInfoWindow(marker) {
-	var contentString = "Still Loading...";
+
+	if(currentOpenWindow != null) {
+		currentOpenWindow.close();
+	}
+
+	hash = marker.get("hash");
+	// Some useful data will be shown here later
+	var contentString = database[hash].ipData.country + ": " + database[hash].ipData.city
 	var infowindow = new google.maps.InfoWindow({
 		content: contentString
 	});
 	infowindow.open(map,marker);
+	currentOpenWindow = infowindow;
 }
 
 function cl(message){
