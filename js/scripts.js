@@ -155,10 +155,23 @@ function getData() {
 function addData(data) {
 
 	var position = new google.maps.LatLng(data.lat, data.lon);
+	var image = 'images/bitcoin.png';
+	
+	contentString = "Loading...";
+	var infowindow = new google.maps.InfoWindow({
+		content: contentString
+	});
+	
 	marker = new google.maps.Marker({
          position: position,
-         map: map
+         map: map,
+		 animation: google.maps.Animation.DROP,
+		 icon: image
     });
+	google.maps.event.addListener(marker, 'click', function() {
+		infowindow.open(map,this);
+	});
+	
 	globalMarkers.push(marker);
 	relayedData.push(position);
 	
