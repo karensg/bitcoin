@@ -2,8 +2,9 @@ database = new Object();
 ipAddressesHashes = [];
 heatmapData = [];
 var heatmap;
-var markerCluster = null;
+markerCluster = null;
 image = 'images/bitcoin.png';
+dayNight = new DayNightOverlay();
 
 lastMarker = null;
 currentOpenWindow = null;
@@ -27,6 +28,7 @@ $(document).ready(function(e) {
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 	
 	reload();
+	setDayNight(map);
 	getData();
 	
 });
@@ -254,8 +256,11 @@ function setInfoWindow(marker) {
 	currentOpenWindow = infowindow;
 }
 
-function cl(message){
+function setDayNight(m) {
+	dayNight.setMap(m);
+}
 
+function cl(message){
 	//console.log(message);
 	//$("#log-info").prepend("<li>" + message + "</li>");
 }
