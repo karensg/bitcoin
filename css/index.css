@@ -1,5 +1,3 @@
-/* CSS Document */
-
 .navbar-inverse{
 	opacity: 0.8;
 }
@@ -31,4 +29,29 @@
 	border-color: #000000;
 	width:100%;
 	height:100%;	
+}
+
+#legenda{
+	position: absolute;
+	right: 50px;
+	height: 20px;
+	top: 70px;
+	z-index:100;
+}
+
+.legenda-block{
+	width: 1px;
+	height: inherit;
+	float:left;
+}
+
+#legenda-start {
+	position: absolute;
+	margin-left: 5px;
+}
+
+#legenda-end {
+	position: absolute;
+	margin-left: 80px;
+	color: #fff;
 }

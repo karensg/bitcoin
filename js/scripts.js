@@ -5,6 +5,7 @@ heatmapData = [];
 var heatmap;
 markerCluster = null;
 image = 'images/bitcoin.png';
+mainCountryColor = "FF3943";
 dayNight = new DayNightOverlay();
 dayNightOn = false;
 
@@ -28,6 +29,7 @@ $(document).ready(function(e) {
 		cl("Toggle day-night");
 		$(this).parent().toggleClass("active");
 		toggleDayNight();
+		return false;
 	});
 	
 	
@@ -130,7 +132,6 @@ function getCountries() {
 	
 function drawMap(data) {
 
-	mainCountryColor = "FF3943";
 	var rows = data['rows'];
 	for (var i in rows) {
 		var countryName = rows[i][0].replace(" ","-");
@@ -200,6 +201,17 @@ function initCountries(map) {
 			country.polygon.setMap(map);
 			country.polygon.setOptions({ fillColor: shadeColor(mainCountryColor, 100 - 5*country.count)});
 		}
+	}
+	// Create legenda
+	if(map == null) {
+		$("#legenda").html('');
+	} else {
+		$("#legenda").append("<div id='legenda-start'>0</div>");
+		for(var i=100; i>-10; i--) {
+			color = shadeColor(mainCountryColor,i);
+			$("#legenda").append("<div class='legenda-block' style='background-color:"+ color +"'></div>");
+		}
+		$("#legenda").append("<div id='legenda-end'>100</div>");
 	}
 }
 
@@ -318,8 +330,7 @@ function addDataToMap(hash) {
 	transaction.marker = marker;
 	heatmapData.push(position);
 	countryName = database[hash].ipData.country.replace(" ", "-");
-	console.log(countryName);
-	if($.trim(countryName) != "Anonymous-Proxy" && countryDB[countryName] != undefined) {
+	if(countryDB[countryName] != undefined) {
 		countryDB[countryName]["count"]++;
 	}
 	
