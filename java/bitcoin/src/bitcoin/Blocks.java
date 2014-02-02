@@ -66,8 +66,10 @@ public class Blocks {
        //write to json file
        try {
  
-		FileWriter file = new FileWriter("../../blocks.json", false);
+		FileWriter file = new FileWriter("../../js/block_data.js", false);
+                file.write("blocksjson = ");
 		file.write(usefulData.toString());
+                file.write(";");
 		file.flush();
 		file.close();
  
