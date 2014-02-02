@@ -1,14 +1,23 @@
-globalMarkers = [];
-relayedData = [];
-transactionData = [];
+database = new Object();
+ipAddressesHashes = [];
+heatmapData = [];
+
 var heatmap;
+markerCluster = null;
+image = 'images/bitcoin.png';
+dayNight = new DayNightOverlay();
+
+lastMarker = null;
+currentOpenWindow = null;
+globalMarkers = [];
+
 
 $(document).ready(function(e) {
-    
+
 	// Create useless log block
 	$("#toggle-log").click(function() {
 		cl("click");
-	 	$(this).parent().toggleClass("active");
+		$(this).parent().toggleClass("active");
 		$("#log-block").fadeToggle();
 	});
 	
@@ -20,6 +29,7 @@ $(document).ready(function(e) {
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 	
 	reload();
+	setDayNight(map);
 	getData();
 	
 });
@@ -30,30 +40,26 @@ function reload() {
 	switch(mode)
 	{
 		case "heatmap":
-		  initHeatmap();
-		  break;
+			initHeatmap();
+			break;
 		case "markers":
-		  initMarkers();
-		  break;
+			initMarkers();
+			break;
 		default:
-		  initHeatmap();
+			initMarkers();
 	}
 }
 
 window.onhashchange = function() {
-   reload();
+	reload();
 };
 
 function initHeatmap() {
 
-	// reset all markers from other views
-	for(i=0; i<globalMarkers.length; i++) {
-		 m = globalMarkers[i];
-		 m.setMap(null);
-	}
+	resetAllMarkers();
 	
 	heatmap = new google.maps.visualization.HeatmapLayer({
-		data: relayedData,	
+		data: heatmapData,	
 	});
 	var gradient = [
 		'rgba(0, 255, 255, 0)',
@@ -86,15 +92,40 @@ function initMarkers() {
 		heatmap.setMap(null);
 	}
 	
+	resetAllMarkers();
+	setAllMarkers();
+}
+
+
+function setAllMarkers() {
 	// set all markers from the past
-	for(i=0; i<globalMarkers.length; i++) {
-		 m = globalMarkers[i];
-		 m.setMap(map);
+	for (var transaction in database) {
+		m = database[transaction].marker;
+		if (m != null) {
+			m.setMap(map);
+		}
+	}
+	if (mode == "grouped") {
+		markerCluster = new MarkerClusterer(map, globalMarkers);
+	} else {
+
+	}
+}
+
+function resetAllMarkers() {
+	for (var transaction in database) {
+		m = database[transaction].marker;
+		if (m != null) {
+			m.setMap(null);
+		}
+	}
+	if (markerCluster != null) {
+		markerCluster.clearMarkers();
 	}
 }
 
 function getData() {
-	ip_addresses = []; // list with IP address that need to be verified
+
 	hashes = []; // list with transaction hashes
 	/*Get IP addresses from blockchain */
 	socket= new WebSocket('ws://ws.blockchain.info/inv');
@@ -104,34 +135,39 @@ function getData() {
 	socket.onmessage= function(s) {
 		transaction = jQuery.parseJSON(s.data);
 		hash = transaction.x.hash;
+		database[hash] = new Object();
+		database[hash].info = transaction.x;
 		hashes.push(hash);
-		ip_address = transaction.x.relayed_by;
-		ip_addresses.push(ip_address);   
+		ipAddressesHashes.push(hash);
 	};
 	checkForNewIPs();
-	checkForNewHashes();
+	//checkForNewHashes();
 	
 	function checkForNewIPs(){
 		
-		if(ip_addresses.length != 0){
-			ip_address = ip_addresses.shift();
-			getLocationIP(ip_address);
+		if(ipAddressesHashes.length != 0){
+			ipAddressesHash = ipAddressesHashes.shift();
+			ipAddress = database[ipAddressesHash].info.relayed_by;
+			callbackAddData = function(ipData) {
+				database[ipAddressesHash].ipData = ipData;
+				addDataToMap(ipAddressesHash);
+			};
+			getLocationIP(ipAddress, callbackAddData);
+			
 		}
 		setTimeout(function(){checkForNewIPs()},500);
 		
 	}
 
-	function getLocationIP(ipAddress){
+	function getLocationIP(ipAddress, callback){
 		
 		if(ipAddress != "127.0.0.1"){		
-			cl("Get location from: " + ipAddress);
-			$.getJSON("http://ip-api.com/json/" + ipAddress, function( data ) {
-				addData(data);
+			//cl("Get location from: " + ipAddress);
+			$.getJSON("http://ip-api.com/json/" + ipAddress, function( ipData ) {
+				callback(ipData);
 			});
 		}
 	}
-	
-	
 	
 	function checkForNewHashes(){
 		
@@ -154,54 +190,79 @@ function getData() {
 	}
 }
 
-function addTransactionData(transaction){
+
+function addDataToMap(hash) {
 	
-	transactionData.push(transaction);
-		
-}
+	transaction = database[hash];
+	var position = new google.maps.LatLng(transaction.ipData.lat, transaction.ipData.lon);
 
-function addData(data) {
-
-	var position = new google.maps.LatLng(data.lat, data.lon);
 	marker = new google.maps.Marker({
-         position: position,
-         map: map
-    });
+		position: position,
+		title: database[hash].ipData.as,
+		map: map,
+		animation: google.maps.Animation.DROP,
+		icon: image
+	});
+	marker.set("hash", hash);
+
+	google.maps.event.addListener(marker, 'click', function() {
+		setInfoWindow(this)
+	});
 	globalMarkers.push(marker);
-	relayedData.push(position);
+	transaction.marker = marker;
+	heatmapData.push(position);
 	
 	switch(mode)
 	{
 		case "heatmap":
-		  addToHeatMap(position,marker);
-		  break;
+			addToHeatMap(hash);
+			break;
 		case "markers":
-		  addMarker(position,marker);
-		  break;
+			addMarker(hash);
+			break;
 		default:
-		  addToHeatMap(position,marker);
+			addMarker(hash);
 	}
 }
 
-function addToHeatMap(position, marker){
+function addToHeatMap(hash){
 		
-	heatmap.setData(relayedData);
-	// delete old marker
-	if(globalMarkers.length > 1) {
-		globalMarkers[globalMarkers.length-2].setMap(null);
+	heatmap.setData(heatmapData);
+	if( lastMarker != null) {
+		lastMarker.setMap(null);
 	}
+	lastMarker = marker;
 	
 }
 
-function addMarker(position,marker) {
-	//marker already set in initialization
+function addMarker(hash) {
+	if(mode == "grouped") {
+		resetAllMarkers();
+		setAllMarkers();
+	}
+}
+
+function setInfoWindow(marker) {
+
+	if(currentOpenWindow != null) {
+		currentOpenWindow.close();
+	}
+
+	hash = marker.get("hash");
+	// Some useful data will be shown here later
+	var contentString = database[hash].ipData.country + ": " + database[hash].ipData.city
+	var infowindow = new google.maps.InfoWindow({
+		content: contentString
+	});
+	infowindow.open(map,marker);
+	currentOpenWindow = infowindow;
+}
+
+function setDayNight(m) {
+	dayNight.setMap(m);
 }
 
 function cl(message){
-
-	console.log(message);
-	$("#log-info").prepend("<li>" + message + "</li>");
+	//console.log(message);
+	//$("#log-info").prepend("<li>" + message + "</li>");
 }
-
-
-
