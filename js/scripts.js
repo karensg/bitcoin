@@ -1,5 +1,6 @@
 globalMarkers = [];
 relayedData = [];
+transactionData = [];
 var heatmap;
 
 $(document).ready(function(e) {
@@ -146,10 +147,17 @@ function getData() {
 					
 		$.getJSON("https://blockchain.info/inv/" + hash + "?format=json", function( data ) {
 			
+			addTransactionData(data);
 			console.log("Get transaction data: " + hash);
 		});
 		
 	}
+}
+
+function addTransactionData(transaction){
+	
+	transactionData.push(transaction);
+		
 }
 
 function addData(data) {
