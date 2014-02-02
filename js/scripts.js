@@ -12,6 +12,8 @@ lastMarker = null;
 currentOpenWindow = null;
 globalMarkers = [];
 
+countryDB = new Object();
+
 
 $(document).ready(function(e) {
 
@@ -35,7 +37,8 @@ $(document).ready(function(e) {
 		center: new google.maps.LatLng(51.37180, 13.23583)
 	};
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-	
+
+	getCountries();	
 	reload();
 	getData();
 	
@@ -44,6 +47,15 @@ $(document).ready(function(e) {
 function reload() {
 
 	mode = window.location.hash.substring(1);
+	resetAllMarkers();
+	// hide heatmap if available
+	if(heatmap != undefined) {
+		heatmap.setMap(null);
+	}
+	initCountries(null);
+
+
+
 	switch(mode)
 	{
 		case "heatmap":
@@ -51,6 +63,9 @@ function reload() {
 			break;
 		case "markers":
 			initMarkers();
+			break;
+		case "countries":
+			initCountries(map); 
 			break;
 		default:
 			initMarkers();
@@ -63,7 +78,7 @@ window.onhashchange = function() {
 
 function initHeatmap() {
 
-	resetAllMarkers();
+	
 	
 	heatmap = new google.maps.visualization.HeatmapLayer({
 		data: heatmapData,	
@@ -93,16 +108,100 @@ function initHeatmap() {
 }
 
 function initMarkers() {
-
-	// hide heatmap if available
-	if(heatmap != undefined) {
-		heatmap.setMap(null);
-	}
 	
-	resetAllMarkers();
 	setAllMarkers();
 }
 
+function getCountries() {
+
+	// Initialize JSONP request
+	var script = document.createElement('script');
+	var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
+	url.push('sql=');
+	var query = 'SELECT name, kml_4326 FROM ' + '1foc3xO9DyfSIF6ofvN0kp2bxSfSeKog5FbdWdQ';
+	var encodedQuery = encodeURIComponent(query);
+	url.push(encodedQuery);
+	url.push('&callback=drawMap');
+	url.push('&key=AIzaSyAm9yWCV7JPCTHCJut8whOjARd7pwROFDQ');
+	script.src = url.join('');
+	var body = document.getElementsByTagName('body')[0];
+	body.appendChild(script);
+}
+	
+function drawMap(data) {
+
+	mainCountryColor = "FF3943";
+	var rows = data['rows'];
+	for (var i in rows) {
+		var countryName = rows[i][0].replace(" ","-");
+		if (countryName != 'Antarctica') {
+		var newCoordinates = [];
+		var geometries = rows[i][1]['geometries'];
+		if (geometries) {
+		  for (var j in geometries) {
+		    newCoordinates.push(constructNewCoordinates(geometries[j]));
+		  }
+		} else {
+		  newCoordinates = constructNewCoordinates(rows[i][1]['geometry']);
+		}
+		var country = new google.maps.Polygon({
+		  paths: newCoordinates,
+		  strokeColor: shadeColor(mainCountryColor,0),
+		  strokeOpacity: 0.8,
+		  strokeWeight: 1,
+		  fillColor: shadeColor(mainCountryColor,100),
+		  fillOpacity: 0.6
+		});
+		google.maps.event.addListener(country, 'mouseover', function() {
+		  this.setOptions({strokeWeight: 3});
+		});
+		google.maps.event.addListener(country, 'mouseout', function() {
+		  this.setOptions({strokeWeight: 1});
+		});
+
+		//country.setMap(map);
+
+		if(countryName == "Czech-Rep.") {
+			countryName = "Czech-Republic";
+		} else if (countryName == "Russia") {
+			countryName = "Russian-Federation";
+		} else if (countryName == "Moldova,-Republic of") {
+			countryName = "Moldova";
+		}
+
+		countryDB[countryName] = new Object();
+		countryDB[countryName]['count'] = 0;
+		countryDB[countryName]['polygon'] = country
+		}
+	}
+
+	
+}
+
+function shadeColor(color, percent) {   
+	var num = parseInt(color.slice(1),16), amt = Math.round(2.55 * percent), R = (num >> 16) + amt, G = (num >> 8 & 0x00FF) + amt, B = (num & 0x0000FF) + amt;
+	return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
+}
+
+function constructNewCoordinates(polygon) {
+	var newCoordinates = [];
+	var coordinates = polygon['coordinates'][0];
+	for (var i in coordinates) {
+	  newCoordinates.push(
+	      new google.maps.LatLng(coordinates[i][1], coordinates[i][0]));
+	}
+	return newCoordinates;
+}	
+
+function initCountries(map) {
+	for (var countryName in countryDB) {
+		var country = countryDB[countryName];
+		if(country.count > 0) {
+			country.polygon.setMap(map);
+			country.polygon.setOptions({ fillColor: shadeColor(mainCountryColor, 100 - 5*country.count)});
+		}
+	}
+}
 
 function setAllMarkers() {
 	// set all markers from the past
@@ -218,6 +317,11 @@ function addDataToMap(hash) {
 	globalMarkers.push(marker);
 	transaction.marker = marker;
 	heatmapData.push(position);
+	countryName = database[hash].ipData.country.replace(" ", "-");
+	console.log(countryName);
+	if($.trim(countryName) != "Anonymous-Proxy" && countryDB[countryName] != undefined) {
+		countryDB[countryName]["count"]++;
+	}
 	
 	switch(mode)
 	{
@@ -227,6 +331,9 @@ function addDataToMap(hash) {
 		case "markers":
 			addMarker(hash);
 			break;
+		case "countries":
+			addToCountry(hash);
+			break;
 		default:
 			addMarker(hash);
 	}
@@ -235,10 +342,7 @@ function addDataToMap(hash) {
 function addToHeatMap(hash){
 		
 	heatmap.setData(heatmapData);
-	if( lastMarker != null) {
-		lastMarker.setMap(null);
-	}
-	lastMarker = marker;
+	removeLastMarker();
 	
 }
 
@@ -247,6 +351,29 @@ function addMarker(hash) {
 		resetAllMarkers();
 		setAllMarkers();
 	}
+}
+
+function addToCountry(hash){
+
+	countryName = database[hash].ipData.country.replace(" ","-");
+	if(countryDB[countryName] != undefined) {
+		countryCount = countryDB[countryName].count;
+		countryPolygon = countryDB[countryName].polygon;
+		countryPolygon.setMap(null);
+		countryPolygon.setOptions({ fillColor: shadeColor(mainCountryColor, 100 - 5*countryCount)});
+		countryPolygon.setMap(map);
+
+		removeLastMarker();
+	}
+
+	
+}
+
+function removeLastMarker() {
+	if( lastMarker != null) {
+		lastMarker.setMap(null);
+	}
+	lastMarker = marker;
 }
 
 function setInfoWindow(marker) {
