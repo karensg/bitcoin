@@ -6,6 +6,7 @@ var heatmap;
 markerCluster = null;
 image = 'images/bitcoin.png';
 dayNight = new DayNightOverlay();
+dayNightOn = false;
 
 lastMarker = null;
 currentOpenWindow = null;
@@ -20,6 +21,13 @@ $(document).ready(function(e) {
 		$(this).parent().toggleClass("active");
 		$("#log-block").fadeToggle();
 	});
+	// Create useless log block
+	$("#toggle-day-night").click(function() {
+		cl("Toggle day-night");
+		$(this).parent().toggleClass("active");
+		toggleDayNight();
+	});
+	
 	
 	// Create map
 	var mapOptions = {
@@ -29,7 +37,6 @@ $(document).ready(function(e) {
 	map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 	
 	reload();
-	setDayNight(map);
 	getData();
 	
 });
@@ -258,8 +265,14 @@ function setInfoWindow(marker) {
 	currentOpenWindow = infowindow;
 }
 
-function setDayNight(m) {
-	dayNight.setMap(m);
+function toggleDayNight() {
+	if(!dayNightOn){
+		dayNight.setMap(map);
+		dayNightOn = true;
+	}else{
+		dayNight.setMap(null);
+		dayNightOn = false;
+	}
 }
 
 function cl(message){
