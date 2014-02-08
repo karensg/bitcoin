@@ -5,11 +5,17 @@ ipAddressesHashes = [];
 exportIp = new Object();
 ipGrouped = new Object();
 heatmapData = [];
+propagationLocations = [];
+propagationPath = [];
+propagationIps = [];
 
 var heatmap;
 markerCluster = null;
 image = 'images/bitcoin.png';
 mainCountryColor = "FF3943";
+lineSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW
+};
 dayNight = new DayNightOverlay();
 dayNightOn = false;
 
@@ -92,8 +98,17 @@ function reload() {
 		case "transaction-value":
 			transactionValue(map);
 			break;
-		case "propagation":
-			initPropagationValue(1);
+		case "propagation1":
+			propagationIps = ips1;
+			initPropagationValue();
+			break;
+		case "propagation2":
+			propagationIps = ips2;
+			initPropagationValue();
+			break;
+		case "propagation3":
+			propagationIps = ips3;
+			initPropagationValue();
 			break;
 		default:
 			initMarkers();
@@ -101,8 +116,54 @@ function reload() {
 }
 
 function initPropagationValue(propagationNumber){
-	console.log("Get propa of: " + ips1);
+	
+	var marker = new google.maps.Marker({
+		  position: new google.maps.LatLng(propagationIps[0].lat,propagationIps[0].lon),
+		  map: map,
+		  title: 'First relay',
+		animation: google.maps.Animation.DROP,
+		icon: image
+	  });
+	setTimeout(function(){addPropagationValue(0)},1500);
+
 }
+
+function addPropagationValue(i){
+	
+	//console.log(ips1[i]);
+	if(i < propagationIps.length && i < 100){
+		latlong = new google.maps.LatLng(propagationIps[i].lat,propagationIps[i].lon);
+		propagationLocations.push(latlong);
+		console.log(latlong);
+		setPropagation();
+		
+		i++;
+		setTimeout(function(){addPropagationValue(i)},1500);
+	}
+	
+	
+	
+		
+}
+
+function setPropagation(){
+	
+	propagationPath = new google.maps.Polyline({
+		path: propagationLocations,
+		geodesic: true,
+		strokeColor: '#FF0000',
+		strokeOpacity: 0.8,
+		strokeWeight: 1,
+		icons: [{
+		  icon: lineSymbol,
+		  offset: '100%'
+		}]
+	});	
+	//propagationPath.setMap(null);
+  	propagationPath.setMap(map);
+}
+
+
 
 function initHeatmap() {
 	
