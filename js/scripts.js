@@ -15,6 +15,7 @@ globalMarkers = [];
 
 countryDB = new Object();
 
+currentUSDprice = null;
 
 $(document).ready(function(e) {
 
@@ -44,6 +45,8 @@ $(document).ready(function(e) {
 	reload();
 	getData();
 	
+	getCurrentPrice();
+	
 });
 
 function reload() {
@@ -69,6 +72,9 @@ function reload() {
 		case "countries":
 			initCountries(map); 
 			break;
+		/*case "probable_owner"
+			initOwners(map); 
+			break;*/
 		default:
 			initMarkers();
 	}
@@ -77,6 +83,15 @@ function reload() {
 window.onhashchange = function() {
 	reload();
 };
+
+function getCurrentPrice(){
+	
+	$.getJSON("https://blockchain.info/q/24hrprice", function( price ) {
+		currentUSDprice = price;
+		console.log("Get current price:"+ price);
+	});
+	
+}
 
 function initHeatmap() {
 
