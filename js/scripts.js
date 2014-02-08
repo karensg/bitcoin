@@ -1,6 +1,7 @@
 database = new Object();
 ipAddressesHashes = [];
 exportIp = new Object();
+ipGrouped = new Object();
 heatmapData = [];
 
 var heatmap;
@@ -13,8 +14,9 @@ dayNightOn = false;
 lastMarker = null;
 currentOpenWindow = null;
 globalMarkers = [];
+globalCircles = [];
 
-countryDB = new Object();
+countryDB = new Object()
 
 currentUSDprice = null;
 
@@ -59,6 +61,7 @@ function reload() {
 		heatmap.setMap(null);
 	}
 	initCountries(null);
+	transactionValue(null);
 
 
 
@@ -231,6 +234,14 @@ function initCountries(map) {
 	}
 }
 
+function transactionValue(map) {
+	for (var i = 0; i < globalCircles.length; i++) {
+		globalCircles[i].setMap(map);
+	}
+}
+
+
+
 function setAllMarkers() {
 	// set all markers from the past
 	for (var transaction in database) {
@@ -280,16 +291,22 @@ function getData() {
 	
 	function checkForNewIPs(){
 		
-		if(ipAddressesHashes.length != 0){
+		if(ipAddressesHashes.length != 0 ){
 			hash = ipAddressesHashes.shift();
 			ipAddress = database[hash].info.relayed_by;
 			callbackAddData = function(ipData) {
 				database[hash].ipData = ipData;
 				addDataToMap(hash);
 				exportIp[ipAddress] = ipData;
-
+				ipGrouped[ipAddress] = new Object();
 			};
-			getLocationIP(ipAddress, callbackAddData);
+			if( exportIp[ipAddress] == null) {
+				getLocationIP(ipAddress, callbackAddData);
+			} else {
+				database[hash].ipData = exportIp[ipAddress];
+				addDataToMap(hash);
+				console.log("IP already exists.")
+			}
 			
 		}
 		setTimeout(function(){checkForNewIPs()},500);
@@ -353,6 +370,7 @@ function addDataToMap(hash) {
 	if(countryDB[countryName] != undefined) {
 		countryDB[countryName]["count"]++;
 	}
+
 	
 	switch(mode)
 	{
@@ -414,8 +432,6 @@ function addTransactionValue(hash) {
 		console.log(database[hash]["amount"]);
 	}
 
-
-
 	var circle = new google.maps.Circle({
 		map: map,
 		radius: Math.log(database[hash]["amount"])*10000,    // metres
@@ -423,7 +439,7 @@ function addTransactionValue(hash) {
 	});
 	circle.bindTo('center', marker, 'position');
 	database[hash]["circle"] = circle;
-	//setInfoWindow(marker);
+	globalCircles.push(circle);
 }
 
 function removeLastMarker() {
@@ -464,9 +480,7 @@ function toggleDayNight() {
 }
 
 function groupByIp() {
-	for(key in database) {
-
-	}
+	
 }
 
 function cl(message){
