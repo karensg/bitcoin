@@ -1,3 +1,5 @@
+// Global variables
+
 database = new Object();
 ipAddressesHashes = [];
 exportIp = new Object();
@@ -17,18 +19,20 @@ globalMarkers = [];
 globalCircles = [];
 
 countryDB = new Object()
-
 currentUSDprice = null;
 
+// Execute when ready with page loading
 $(document).ready(function(e) {
 
-	// Create useless log block
+	// Create a log block
 	$("#toggle-log").click(function() {
 		cl("click");
 		$(this).parent().toggleClass("active");
 		$("#log-block").fadeToggle();
+		return false;
 	});
-	// Create useless log block
+
+	// Create a day-night block
 	$("#toggle-day-night").click(function() {
 		cl("Toggle day-night");
 		$(this).parent().toggleClass("active");
@@ -37,7 +41,7 @@ $(document).ready(function(e) {
 	});
 	
 	
-	// Create map
+	// Create Google Maps Object
 	var mapOptions = {
 		zoom: 3	,
 		center: new google.maps.LatLng(51.37180, 13.23583)
@@ -52,17 +56,26 @@ $(document).ready(function(e) {
 	
 });
 
+// Reset Google Maps view after changing a hashtag
+$(window).bind('hashchange', reload);
+
 function reload() {
 
 	mode = window.location.hash.substring(1);
+
+	// Remove all markers
 	resetAllMarkers();
-	// hide heatmap if available
+
+	// Hide heatmap if available
 	if(heatmap != undefined) {
 		heatmap.setMap(null);
 	}
-	initCountries(null);
-	transactionValue(null);
 
+	// Remove countries layer
+	initCountries(null);
+
+	// Remove transaction value layer
+	transactionValue(null);
 
 
 	switch(mode)
@@ -77,27 +90,14 @@ function reload() {
 			initCountries(map); 
 			break;
 		case "transaction-value":
-			transactionValue();
+			transactionValue(map);
 			break;
 		case "propagation":
 			initPropagationValue(1);
 			break;
-	
 		default:
 			initMarkers();
 	}
-}
-
-window.onhashchange = function() {
-	reload();
-};
-
-function getCurrentPrice(){
-	
-	$.getJSON("https://blockchain.info/q/24hrprice", function( price ) {
-		currentUSDprice = price;
-	});
-	
 }
 
 function initPropagationValue(propagationNumber){
@@ -105,8 +105,6 @@ function initPropagationValue(propagationNumber){
 }
 
 function initHeatmap() {
-
-	
 	
 	heatmap = new google.maps.visualization.HeatmapLayer({
 		data: heatmapData,	
@@ -127,6 +125,7 @@ function initHeatmap() {
 		'rgba(191, 0, 31, 1)',
 		'rgba(255, 0, 0, 1)'
 	];
+
 	heatmap.set('gradient', gradient);
 	heatmap.set('radius', 25);
 	heatmap.set('opacity', 1);
@@ -140,25 +139,29 @@ function initMarkers() {
 	setAllMarkers();
 }
 
+// Get Country data from Google database
 function getCountries() {
 
 	// Initialize JSONP request
 	var script = document.createElement('script');
 	var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
 	url.push('sql=');
+	// Initialize a SQL query
 	var query = 'SELECT name, kml_4326 FROM ' + '1foc3xO9DyfSIF6ofvN0kp2bxSfSeKog5FbdWdQ';
 	var encodedQuery = encodeURIComponent(query);
 	url.push(encodedQuery);
-	url.push('&callback=drawMap');
+	url.push('&callback=drawCountries');
 	url.push('&key=AIzaSyAm9yWCV7JPCTHCJut8whOjARd7pwROFDQ');
 	script.src = url.join('');
 	var body = document.getElementsByTagName('body')[0];
 	body.appendChild(script);
 }
-	
-function drawMap(data) {
+
+// Draw layers for Countries from the data	
+function drawCountries(data) {
 
 	var rows = data['rows'];
+	// Draw each country
 	for (var i in rows) {
 		var countryName = rows[i][0].replace(" ","-");
 		if (countryName != 'Antarctica') {
@@ -186,8 +189,7 @@ function drawMap(data) {
 		  this.setOptions({strokeWeight: 1});
 		});
 
-		//country.setMap(map);
-
+		// Normalize countries
 		if(countryName == "Czech-Rep.") {
 			countryName = "Czech-Republic";
 		} else if (countryName == "Russia") {
@@ -196,20 +198,21 @@ function drawMap(data) {
 			countryName = "Moldova";
 		}
 
+		// Save the countries with their visual data
 		countryDB[countryName] = new Object();
 		countryDB[countryName]['count'] = 0;
 		countryDB[countryName]['polygon'] = country
 		}
 	}
-
-	
 }
 
+//Bitwise transfer the color to be darker, in hex
 function shadeColor(color, percent) {   
 	var num = parseInt(color.slice(1),16), amt = Math.round(2.55 * percent), R = (num >> 16) + amt, G = (num >> 8 & 0x00FF) + amt, B = (num & 0x0000FF) + amt;
 	return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
 }
 
+// Help function for drawing countries
 function constructNewCoordinates(polygon) {
 	var newCoordinates = [];
 	var coordinates = polygon['coordinates'][0];
@@ -218,7 +221,7 @@ function constructNewCoordinates(polygon) {
 	      new google.maps.LatLng(coordinates[i][1], coordinates[i][0]));
 	}
 	return newCoordinates;
-}	
+}
 
 function initCountries(map) {
 	for (var countryName in countryDB) {
@@ -228,6 +231,7 @@ function initCountries(map) {
 			country.polygon.setOptions({ fillColor: shadeColor(mainCountryColor, 100 - 5*country.count)});
 		}
 	}
+
 	// Create legenda
 	if(map == null) {
 		$("#legenda").html('');
@@ -246,8 +250,6 @@ function transactionValue(map) {
 		globalCircles[i].setMap(map);
 	}
 }
-
-
 
 function setAllMarkers() {
 	// set all markers from the past
@@ -278,13 +280,13 @@ function resetAllMarkers() {
 
 function getData() {
 
-	hashes = []; // list with transaction hashes
-	/*Get IP addresses from blockchain */
-	socket= new WebSocket('ws://ws.blockchain.info/inv');
-	socket.onopen= function() {
+	hashes = [];
+	// Get IP addresses from blockchain
+	socket = new WebSocket('ws://ws.blockchain.info/inv');
+	socket.onopen = function() {
 	   socket.send('{"op":"unconfirmed_sub"}');
 	};
-	socket.onmessage= function(s) {
+	socket.onmessage = function(s) {
 		transaction = jQuery.parseJSON(s.data);
 		hash = transaction.x.hash;
 		database[hash] = new Object();
@@ -294,7 +296,6 @@ function getData() {
 		ipAddressesHashes.push(hash);
 	};
 	checkForNewIPs();
-	//checkForNewHashes();
 	
 	function checkForNewIPs(){
 		
@@ -303,9 +304,10 @@ function getData() {
 			ipAddress = database[hash].info.relayed_by;
 			callbackAddData = function(ipData) {
 				database[hash].ipData = ipData;
+				ipGrouped[ipAddress] = [];
+				ipGrouped[ipAddress].push(hash);
 				addDataToMap(hash);
-				exportIp[ipAddress] = ipData;
-				ipGrouped[ipAddress] = new Object();
+				exportIp[ipAddress] = ipData;				
 			};
 			if( exportIp[ipAddress] == null) {
 				getLocationIP(ipAddress, callbackAddData);
@@ -329,30 +331,10 @@ function getData() {
 			});
 		}
 	}
-	/*
-	//Not used anymore
-	
-	function checkForNewHashes(){
-		
-		if(hashes.length != 0){
-			hash = hashes.shift();
-			getTransActionData(hash);
-		}
-		setTimeout(function(){checkForNewHashes()},500);
-		
-	}
 
-	function getTransActionData(hash){
-					
-		$.getJSON("https://blockchain.info/inv/" + hash + "?format=json", function( data ) {
-			
-			addTransactionData(data);
-		});
-		
-	}*/
 }
 
-
+// General functionality for visual appearance for each transaction
 function addDataToMap(hash) {
 	
 	transaction = database[hash];
@@ -437,19 +419,34 @@ function addTransactionValue(hash) {
 		amount += trans[i]["prev_out"]["value"];
 	}
 	database[hash]["amount"] += amount;
-	if(database[hash]["amount"] != amount ) {
-		database[hash]["circle"].setMap(null);
-		console.log(database[hash]["amount"]);
+	ip = database[hash]["info"]["relayed_by"];
+	console.log(ip);
+	totalAmount = getIpAmount(ip);
+
+	if (totalAmount != database[hash]["amount"]) {
+		deleteIpCircle(ip);
 	}
+
 
 	var circle = new google.maps.Circle({
 		map: map,
-		radius: Math.log(database[hash]["amount"])*10000,    // metres
+		radius: Math.log(totalAmount)*10000,
 		fillColor: '#AA0000'
 	});
 	circle.bindTo('center', marker, 'position');
 	database[hash]["circle"] = circle;
 	globalCircles.push(circle);
+	//removeLastMarker();
+}
+
+function deleteIpCircle(ip) {
+	for (var i = 0; i < ipGrouped[ip].length; i++) {
+		hash = ipGrouped[ip][i];
+		if(database[hash]["circle"] != undefined) {
+			database[hash]["circle"].setMap(null);
+			console.log("Removed old circle");
+		}
+	};
 }
 
 function removeLastMarker() {
@@ -469,14 +466,34 @@ function setInfoWindow(marker) {
 	// Some useful data will be shown here later
 	var contentString = database[hash].ipData.country + ": " + database[hash].ipData.city;
 	if(mode == "transaction-value") {
-		amount = database[hash]["amount"] / 100000000 * currentUSDprice;
-		contentString += "<br/>Total Transaction value: " + amount;
+		totalAmount = Math.round(getIpAmount(database[hash]["info"]["relayed_by"]) / 100000000 * currentUSDprice);
+		contentString += "<br/>Total Transaction value: &#36;" + totalAmount;
 	}
 	var infowindow = new google.maps.InfoWindow({
 		content: contentString
 	});
 	infowindow.open(map,marker);
 	currentOpenWindow = infowindow;
+}
+
+function getCurrentPrice(){
+	
+	$.getJSON("https://blockchain.info/q/24hrprice", function( price ) {
+		currentUSDprice = price;
+	});
+	
+}
+
+function getIpAmount(ip) {
+	amount = 0;
+
+	if(ipGrouped[ip] != null) {
+		for (var i = 0; i < ipGrouped[ip].length; i++) {
+			hash = ipGrouped[ip][i];
+			amount += database[hash]["amount"];
+		};
+	}
+	return amount;
 }
 
 function toggleDayNight() {
@@ -487,10 +504,6 @@ function toggleDayNight() {
 		dayNight.setMap(null);
 		dayNightOn = false;
 	}
-}
-
-function groupByIp() {
-	
 }
 
 function cl(message){
