@@ -305,6 +305,8 @@ function getData() {
 			});
 		}
 	}
+	/*
+	//Not used anymore
 	
 	function checkForNewHashes(){
 		
@@ -323,7 +325,7 @@ function getData() {
 			addTransactionData(data);
 		});
 		
-	}
+	}*/
 }
 
 
