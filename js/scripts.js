@@ -79,7 +79,10 @@ function reload() {
 		case "transaction-value":
 			transactionValue();
 			break;
-
+		case "propagation":
+			initPropagationValue(1);
+			break;
+	
 		default:
 			initMarkers();
 	}
@@ -95,6 +98,10 @@ function getCurrentPrice(){
 		currentUSDprice = price;
 	});
 	
+}
+
+function initPropagationValue(propagationNumber){
+	console.log("Get propa of: " + ips1);
 }
 
 function initHeatmap() {
@@ -382,6 +389,9 @@ function addDataToMap(hash) {
 			break;
 		case "countries":
 			addToCountry(hash);
+			break;
+		case "transaction-value":
+			addTransactionValue(hash);
 			break;
 		case "transaction-value":
 			addTransactionValue(hash);
