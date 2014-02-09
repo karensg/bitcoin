@@ -129,14 +129,7 @@ function reload() {
 
 function initPropagationValue(propagationNumber){
 	
-	var marker = new google.maps.Marker({
-		  position: new google.maps.LatLng(propagationIps[0].lat,propagationIps[0].lon),
-		  map: map,
-		  title: 'First relay',
-		animation: google.maps.Animation.DROP,
-		icon: image
-	  });
-	//globalMarkers.push(marker);
+	
 	setTimeout(function(){addPropagationValue(0)},1500);
 
 }
@@ -144,9 +137,19 @@ function initPropagationValue(propagationNumber){
 function addPropagationValue(i){
 	
 	//console.log(ips1[i]);
-	if(i < propagationIps.length && i < 100){
+	if(i < propagationIps.length){
+		
 		latlong = new google.maps.LatLng(propagationIps[i].lat,propagationIps[i].lon);
-		console.log(propagationLocations.length);
+		
+		var marker = new google.maps.Marker({
+			  position: latlong,
+			  map: map,
+			  title: 'Propegation: ' + i,
+			animation: google.maps.Animation.DROP,
+			icon: image
+		  });
+		globalMarkers.push(marker);
+
 		if(propagationLocations.length > 3)
 		{
 			propagationLocations.shift();
