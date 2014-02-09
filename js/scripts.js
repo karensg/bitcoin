@@ -5,6 +5,8 @@ ipAddressesHashes = [];
 exportIp = new Object();
 ipGrouped = new Object();
 heatmapData = [];
+
+//propagation variables
 propagationLocations = [];
 propagationPath = null;
 propagationIps = [];
@@ -119,15 +121,15 @@ function reload() {
 			transactionValue(map);
 			break;
 		case "propagation1":
-			propagationIps = ips1;
+			propagationIps = ips1; //set dataset to the first dataset
 			initPropagationValue();
 			break;
 		case "propagation2":
-			propagationIps = ips2;
+			propagationIps = ips2; //set dataset to the second dataset
 			initPropagationValue();
 			break;
 		case "propagation3":
-			propagationIps = ips3;
+			propagationIps = ips3; //set dataset to the third dataset
 			initPropagationValue();
 			break;
 		default:
@@ -135,6 +137,7 @@ function reload() {
 	}
 }
 
+//initiates the propation values, set everything to zero
 function initPropagationValue(){
 	
 	propagationLocations = [];
@@ -145,11 +148,14 @@ function initPropagationValue(){
 
 function addPropagationValue(i){
 	
-	//console.log(ips1[i]);
+	
+	//while the transaction is propagated
 	if(i < propagationIps.length){
 		
+		//create new latlng position
 		latlong = new google.maps.LatLng(propagationIps[i].lat,propagationIps[i].lon);
 		
+		//create new marker for the position
 		var marker = new google.maps.Marker({
 			  position: latlong,
 			  map: map,
@@ -158,16 +164,22 @@ function addPropagationValue(i){
 			icon: image
 		  });
 		
+		//add marker to all the markers (in case need to be removed)
 		propagationMarkers.push(marker);
 
+		//only 3 arrows at one time
 		if(propagationLocations.length > 3)
 		{
+			//remove first marker
 			propagationLocations.shift();
 		}
+		//add location to locations
 		propagationLocations.push(latlong);
 		
+		//show the path and markers
 		setPropagation();
 		
+		//wait 1.5 sec to add next path
 		i++;
 		propagationTimeout = setTimeout(function(){addPropagationValue(i)},1500);
 	}
@@ -177,9 +189,13 @@ function addPropagationValue(i){
 		
 }
 
+//function to show the path op the propagation
 function setPropagation(){
 	
+	//remove the previous path
 	removePropagationPath();
+	
+	//add the current path to the map
 	propagationPath = new google.maps.Polyline({
 		path: propagationLocations,
 		geodesic: true,
@@ -194,23 +210,22 @@ function setPropagation(){
   	propagationPath.setMap(map);
 }
 
+//function to remove the path from the map
 function removePropagationPath(){
 	if(propagationPath){
 		propagationPath.setMap(null);
 	}		
 }
-
+//function to remove the propagation markers from the map
 function removePropagationMarkers(){
 	
 	for (var j = 0; j < propagationMarkers.length; j++) {
-		//console.log(propagationMarkers[j]);
 		if (propagationMarkers[j] != null) {
 			propagationMarkers[j].setMap(null);
 		}
 	}
-	propagationMarkers = [];
-	
-		
+	//every marker is removed -> empty the array
+	propagationMarkers = [];		
 }
 
 
