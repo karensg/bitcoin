@@ -70,6 +70,7 @@ $(document).ready(function(e) {
 	getData();
 	
 	getCurrentPrice();
+	//$("#toggle-about").click();
 	
 });
 

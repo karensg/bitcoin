@@ -9,7 +9,7 @@
 	left:5%;
 	bottom:5%;
 	z-index:100;
-	opacity:0.7;
+	opacity:0.9;
 	display:none;
 }
 
@@ -38,7 +38,7 @@
 	left:10%;
 	top:15%;
 	z-index:100;
-	opacity:0.7;
+	opacity:0.9;
 	display:none;
 }
 
@@ -61,7 +61,7 @@
 
 #legenda{
 	position: absolute;
-	right: 50px;
+	right: 40px;
 	height: 20px;
 	top: 70px;
 	z-index:100;
