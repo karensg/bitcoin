@@ -32,18 +32,29 @@ $(document).ready(function(e) {
 
 	// Create a log block
 	$("#toggle-log").click(function() {
-		cl("click");
 		$(this).parent().toggleClass("active");
 		$("#log-block").fadeToggle();
 		return false;
 	});
+	$("#close-log").click(function() {
+		$("#toggle-log").click();
+	});
 
 	// Create a day-night block
 	$("#toggle-day-night").click(function() {
-		cl("Toggle day-night");
 		$(this).parent().toggleClass("active");
 		toggleDayNight();
 		return false;
+	});
+
+	// Create an about page
+	$("#toggle-about").click(function() {
+		$(this).parent().toggleClass("active");
+		$("#about-page").fadeToggle();
+		return false;
+	});
+	$("#close-about").click(function() {
+		$("#toggle-about").click();
 	});
 	
 	
@@ -501,13 +512,15 @@ function addTransactionValue(hash) {
 }
 
 function deleteIpCircle(ip) {
-	for (var i = 0; i < ipGrouped[ip].length; i++) {
-		hash = ipGrouped[ip][i];
-		if(database[hash]["circle"] != undefined) {
-			database[hash]["circle"].setMap(null);
-			console.log("Removed old circle");
+	if(ipGrouped[ip] != undefined) {
+		for (var i = 0; i < ipGrouped[ip].length; i++) {
+			hash = ipGrouped[ip][i];
+			if(database[hash]["circle"] != undefined) {
+				database[hash]["circle"].setMap(null);
+				console.log("Removed old circle");
+			}
 		}
-	};
+	}
 }
 
 function removeLastMarker() {
