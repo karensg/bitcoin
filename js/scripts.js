@@ -32,6 +32,7 @@ currentUSDprice = null;
 // Execute when ready with page loading
 $(document).ready(function(e) {
 
+
 	// Create a log block
 	$("#toggle-log").click(function() {
 		$(this).parent().toggleClass("active");
@@ -202,7 +203,7 @@ function removePropagationPath(){
 function removePropagationMarkers(){
 	
 	for (var j = 0; j < propagationMarkers.length; j++) {
-		console.log(propagationMarkers[j]);
+		//console.log(propagationMarkers[j]);
 		if (propagationMarkers[j] != null) {
 			propagationMarkers[j].setMap(null);
 		}
