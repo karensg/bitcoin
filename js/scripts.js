@@ -394,7 +394,6 @@ function getData() {
 			} else {
 				database[hash].ipData = exportIp[ipAddress];
 				addDataToMap(hash);
-				console.log("IP already exists.")
 			}
 			
 		}
@@ -416,7 +415,7 @@ function getData() {
 
 // General functionality for visual appearance for each transaction
 function addDataToMap(hash) {
-	
+
 	transaction = database[hash];
 	var position = new google.maps.LatLng(transaction.ipData.lat, transaction.ipData.lon);
 
@@ -428,6 +427,9 @@ function addDataToMap(hash) {
 		icon: image
 	});
 	marker.set("hash", hash);
+	if(mode.substring(0,mode.length-1)) {
+		marker.setMap(null);
+	}
 
 	google.maps.event.addListener(marker, 'click', function() {
 		setInfoWindow(this)
@@ -525,7 +527,6 @@ function deleteIpCircle(ip) {
 			hash = ipGrouped[ip][i];
 			if(database[hash]["circle"] != undefined) {
 				database[hash]["circle"].setMap(null);
-				console.log("Removed old circle");
 			}
 		}
 	}

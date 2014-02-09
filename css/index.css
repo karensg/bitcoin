@@ -43,13 +43,7 @@
 }
 
 #about-page .panel-primary>.panel-heading{
-
-	background-color:#000000;
-	
-}
-#about-page .panel-primary>.panel-body{
-
-	overflow:scroll;
+	background-color:#000000;	
 }
 
 #about-page .panel-primary{
