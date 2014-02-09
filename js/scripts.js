@@ -134,7 +134,7 @@ function reload() {
 	}
 }
 
-function initPropagationValue(propagationNumber){
+function initPropagationValue(){
 	
 	propagationLocations = [];
 	propagationMarkers = [];
@@ -200,15 +200,16 @@ function removePropagationPath(){
 }
 
 function removePropagationMarkers(){
-	if(propagationMarkers.length > 0)
-	{
-		for (var marker in propagationMarkers) {
-			console.log(marker);
-			if (marker != null) {
-				//m.setMap(map);
-			}
+	
+	for (var j = 0; j < propagationMarkers.length; j++) {
+		console.log(propagationMarkers[j]);
+		if (propagationMarkers[j] != null) {
+			propagationMarkers[j].setMap(null);
 		}
-	}	
+	}
+	propagationMarkers = [];
+	
+		
 }
 
 
