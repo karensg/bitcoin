@@ -474,7 +474,7 @@ function addDataToMap(hash) {
 		icon: image
 	});
 	marker.set("hash", hash);
-	if(mode.substring(0,mode.length-1)) {
+	if(mode.substring(0,mode.length-1) == "propagation") {
 		marker.setMap(null);
 	}
 
@@ -500,9 +500,6 @@ function addDataToMap(hash) {
 			break;
 		case "countries":
 			addToCountry(hash);
-			break;
-		case "transaction-value":
-			addTransactionValue(hash);
 			break;
 		case "transaction-value":
 			addTransactionValue(hash);
