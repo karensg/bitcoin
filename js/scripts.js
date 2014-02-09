@@ -6,7 +6,7 @@ exportIp = new Object();
 ipGrouped = new Object();
 heatmapData = [];
 propagationLocations = [];
-propagationPath = [];
+propagationPath = null;
 propagationIps = [];
 
 var heatmap;
@@ -135,6 +135,7 @@ function initPropagationValue(propagationNumber){
 		animation: google.maps.Animation.DROP,
 		icon: image
 	  });
+	//globalMarkers.push(marker);
 	setTimeout(function(){addPropagationValue(0)},1500);
 
 }
@@ -144,8 +145,13 @@ function addPropagationValue(i){
 	//console.log(ips1[i]);
 	if(i < propagationIps.length && i < 100){
 		latlong = new google.maps.LatLng(propagationIps[i].lat,propagationIps[i].lon);
+		console.log(propagationLocations.length);
+		if(propagationLocations.length > 3)
+		{
+			propagationLocations.shift();
+		}
 		propagationLocations.push(latlong);
-		console.log(latlong);
+		
 		setPropagation();
 		
 		i++;
@@ -158,7 +164,10 @@ function addPropagationValue(i){
 }
 
 function setPropagation(){
-	
+	console.log(propagationLocations);
+	if(propagationPath){
+		propagationPath.setMap(null);
+	}
 	propagationPath = new google.maps.Polyline({
 		path: propagationLocations,
 		geodesic: true,
@@ -169,8 +178,7 @@ function setPropagation(){
 		  icon: lineSymbol,
 		  offset: '100%'
 		}]
-	});	
-	//propagationPath.setMap(null);
+	});		
   	propagationPath.setMap(map);
 }
 
