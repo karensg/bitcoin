@@ -48,6 +48,7 @@
 
 #about-page .panel-primary > .panel-body{
 	overflow-y:scroll;
+	height: 90%;
 }
 
 #about-page .panel-primary{
