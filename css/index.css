@@ -13,12 +13,12 @@
 	display:none;
 }
 
-#log-block .panel-primary>.panel-heading{
+#log-block .panel-primary > .panel-heading{
 
 	background-color:#000000;
 	
 }
-#log-block .panel-primary>.panel-body{
+#log-block .panel-primary > .panel-body{
 
 	overflow:scroll;
 	height:195px;
@@ -44,6 +44,10 @@
 
 #about-page .panel-primary>.panel-heading{
 	background-color:#000000;	
+}
+
+#about-page .panel-primary > .panel-body{
+	overflow-y:scroll;
 }
 
 #about-page .panel-primary{

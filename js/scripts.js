@@ -61,6 +61,7 @@ $(document).ready(function(e) {
 	$("#close-about").click(function() {
 		$("#toggle-about").click();
 	});
+	$("#toggle-about").click();
 	
 	
 	// Create Google Maps Object
@@ -75,7 +76,6 @@ $(document).ready(function(e) {
 	getData();
 	
 	getCurrentPrice();
-	//$("#toggle-about").click();
 	
 });
 
