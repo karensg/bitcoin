@@ -8,6 +8,8 @@ heatmapData = [];
 propagationLocations = [];
 propagationPath = null;
 propagationIps = [];
+propagationTimeout = null;
+propagationMarkers = [];
 
 var heatmap;
 markerCluster = null;
@@ -94,7 +96,12 @@ function reload() {
 
 	// Remove transaction value layer
 	transactionValue(null);
-
+	
+	//remove all propagation paths and markers
+	removePropagationPath();
+	removePropagationMarkers();
+	//remove timeout propagation
+	clearTimeout(propagationTimeout);
 
 	switch(mode)
 	{
@@ -129,8 +136,9 @@ function reload() {
 
 function initPropagationValue(propagationNumber){
 	
-	
-	setTimeout(function(){addPropagationValue(0)},1500);
+	propagationLocations = [];
+	propagationMarkers = [];
+	addPropagationValue(0);
 
 }
 
@@ -148,7 +156,8 @@ function addPropagationValue(i){
 			animation: google.maps.Animation.DROP,
 			icon: image
 		  });
-		globalMarkers.push(marker);
+		
+		propagationMarkers.push(marker);
 
 		if(propagationLocations.length > 3)
 		{
@@ -159,7 +168,7 @@ function addPropagationValue(i){
 		setPropagation();
 		
 		i++;
-		setTimeout(function(){addPropagationValue(i)},1500);
+		propagationTimeout = setTimeout(function(){addPropagationValue(i)},1500);
 	}
 	
 	
@@ -168,16 +177,14 @@ function addPropagationValue(i){
 }
 
 function setPropagation(){
-	console.log(propagationLocations);
-	if(propagationPath){
-		propagationPath.setMap(null);
-	}
+	
+	removePropagationPath();
 	propagationPath = new google.maps.Polyline({
 		path: propagationLocations,
 		geodesic: true,
 		strokeColor: '#FF0000',
-		strokeOpacity: 0.8,
-		strokeWeight: 1,
+		strokeOpacity: 0.7,
+		strokeWeight: 3,
 		icons: [{
 		  icon: lineSymbol,
 		  offset: '100%'
@@ -185,6 +192,25 @@ function setPropagation(){
 	});		
   	propagationPath.setMap(map);
 }
+
+function removePropagationPath(){
+	if(propagationPath){
+		propagationPath.setMap(null);
+	}		
+}
+
+function removePropagationMarkers(){
+	if(propagationMarkers.length > 0)
+	{
+		for (var marker in propagationMarkers) {
+			console.log(marker);
+			if (marker != null) {
+				//m.setMap(map);
+			}
+		}
+	}	
+}
+
 
 
 
