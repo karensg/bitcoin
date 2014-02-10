@@ -109,26 +109,33 @@ function reload() {
 	switch(mode)
 	{
 		case "heatmap":
+			cl("Mode: Heatmap");
 			initHeatmap();
 			break;
 		case "markers":
+			cl("Mode: Markers");
 			initMarkers();
 			break;
 		case "countries":
+			cl("Mode: Countries");
 			initCountries(map); 
 			break;
 		case "transaction-value":
+			cl("Mode: Transaction value");
 			transactionValue(map);
 			break;
 		case "propagation1":
+			cl("Mode: Transaction propagation");
 			propagationIps = ips1; //set dataset to the first dataset
 			initPropagationValue();
 			break;
 		case "propagation2":
+			cl("Mode: Transaction propagation");
 			propagationIps = ips2; //set dataset to the second dataset
 			initPropagationValue();
 			break;
 		case "propagation3":
+			cl("Mode: Transaction propagation");
 			propagationIps = ips3; //set dataset to the third dataset
 			initPropagationValue();
 			break;
@@ -415,12 +422,14 @@ function getData() {
 	};
 	socket.onmessage = function(s) {
 		transaction = jQuery.parseJSON(s.data);
+		console.log(transaction);
 		hash = transaction.x.hash;
 		database[hash] = new Object();
 		database[hash].info = transaction.x;
 		database[hash]["amount"] = 0;
 		hashes.push(hash);
 		ipAddressesHashes.push(hash);
+		cl("New transaction: " + hash);
 	};
 	checkForNewIPs();
 	
@@ -635,5 +644,5 @@ function toggleDayNight() {
 
 function cl(message){
 	//console.log(message);
-	//$("#log-info").prepend("<li>" + message + "</li>");
+	$("#log-info").prepend("<li>" + message + "</li>");
 }
